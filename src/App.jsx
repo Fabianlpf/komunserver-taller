@@ -6,6 +6,8 @@ import OrderHistory from './components/OrderHistory';
 import StockManager from './components/StockManager';
 import Contabilidad from './components/Contabilidad';
 import ConfiguracionTaller from './components/ConfiguracionTaller';
+import Login from './components/Login';
+import { supabase } from './services/supabase';
 import { obtenerConfiguracion, CONFIG_DEFAULT } from './services/configService';
 import { guardarOrden } from './services/orderService';
 import {
@@ -28,6 +30,7 @@ import {
   CheckCircle2,
   Wrench,
   PackageCheck,
+  LogOut,
 } from 'lucide-react';
 
 const crearOrdenVacia = () => ({
@@ -63,6 +66,21 @@ const crearOrdenVacia = () => ({
 });
 
 export default function App() {
+  const [sesion, setSesion] = useState(null);
+  const [verificandoSesion, setVerificandoSesion] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSesion(session);
+      setVerificandoSesion(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSesion(session);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
   const [activeTab, setActiveTab] = useState('nueva-orden');
   const [orden, setOrden] = useState(crearOrdenVacia());
   const [guardando, setGuardando] = useState(false);
@@ -215,6 +233,18 @@ export default function App() {
     },
   ];
 
+  if (verificandoSesion) {
+    return (
+      <div className="min-h-screen bg-[#0b1120] flex items-center justify-center text-slate-400 text-sm">
+        Verificando acceso...
+      </div>
+    );
+  }
+
+  if (!sesion) {
+    return <Login />;
+  }
+
   return (
     <div className="flex min-h-screen bg-[#0b1120] text-slate-200">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -276,6 +306,13 @@ export default function App() {
               className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-sm font-medium border border-violet-500/30 transition cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" /> Nueva
+            </button>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              title="Cerrar sesión"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-rose-600/15 hover:bg-rose-600/25 text-rose-400 text-sm font-medium border border-rose-500/30 transition cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" /> Salir
             </button>
           </div>
         </header>
