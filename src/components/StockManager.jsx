@@ -5,6 +5,7 @@ import {
   Plus,
   Upload,
   Download,
+  FileSpreadsheet,
   Pencil,
   Trash2,
   Package,
@@ -155,6 +156,37 @@ export default function StockManager() {
     XLSX.writeFile(libro, 'plantilla_repuestos.xlsx');
   };
 
+  const exportarStockExcel = () => {
+    if (filtrados.length === 0) {
+      alert('No hay repuestos para exportar.');
+      return;
+    }
+
+    const filas = filtrados.map((r) => ({
+      Nombre: r.nombre || '',
+      Modelo: r.modelo || '',
+      Categoria: r.categoria || 'General',
+      Precio: Number(r.precio) || 0,
+      Stock: Number(r.stock) || 0,
+      'Valor Total': (Number(r.precio) || 0) * (Number(r.stock) || 0),
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(filas);
+    hoja['!cols'] = [
+      { wch: 28 },
+      { wch: 24 },
+      { wch: 16 },
+      { wch: 14 },
+      { wch: 10 },
+      { wch: 16 },
+    ];
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Inventario');
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(libro, `Inventario_Repuestos_${fechaHoy}.xlsx`);
+  };
+
   const handleSubirExcel = async (e) => {
     const archivo = e.target.files[0];
     if (!archivo) return;
@@ -226,6 +258,13 @@ export default function StockManager() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium transition cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Nueva Referencia
+          </button>
+
+          <button
+            onClick={exportarStockExcel}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-sm font-medium transition cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4" /> Exportar Excel
           </button>
 
           <button

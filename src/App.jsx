@@ -241,13 +241,13 @@ export default function App() {
     );
   }
 
-  if (!sesion) {
-    return <Login />;
-  }
+  if (!sesion) { return <Login />;}
+
+  const esTecnico = sesion?.user?.user_metadata?.rol === 'tecnico';
 
   return (
     <div className="flex min-h-screen bg-[#0b1120] text-slate-200">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} esTecnico={esTecnico} />
 
       <main className="flex-1 flex flex-col overflow-y-auto">
         {/* Barra Superior */}
@@ -788,11 +788,10 @@ export default function App() {
           <OrderHistory onEditarOrden={handleEditarDesdeHistorial} />
         ) : activeTab === 'stock' ? (
           <StockManager />
-        ) : activeTab === 'contabilidad' ? (
-          <Contabilidad configTaller={configTaller} />
-          
-        ) : activeTab === 'config' || activeTab === 'configuracion' ? (
-          <ConfiguracionTaller onConfigActualizada={setConfigTaller} />
+        ) : activeTab === 'contabilidad' && !esTecnico ? (
+            <Contabilidad configTaller={configTaller} />
+        ) : (activeTab === 'config' || activeTab === 'configuracion') && !esTecnico ? (
+            <ConfiguracionTaller onConfigActualizada={setConfigTaller} />
         ) : (
           <div className="p-10 text-center text-slate-400">
             <p className="text-lg font-medium text-white mb-1">Módulo "{activeTab}" listo para construir</p>

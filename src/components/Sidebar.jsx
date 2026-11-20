@@ -7,15 +7,17 @@ import {
   ClipboardList
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab }) {
+export default function Sidebar({ activeTab, setActiveTab, esTecnico = false }) {
   const menuItems = [
     { id: 'nueva-orden', label: 'Orden de Servicio', icon: Wrench },
     { id: 'ordenes', label: 'Historial de Órdenes', icon: ClipboardList },
     { id: 'stock', label: 'Stock / Repuestos', icon: Package },
     { id: 'pos', label: 'Punto de Venta', icon: ShoppingCart },
-    { id: 'contabilidad', label: 'Contabilidad', icon: Calculator },
-    { id: 'config', label: 'Configuración', icon: Settings },
+    { id: 'contabilidad', label: 'Contabilidad', icon: Calculator, soloAdmin: true },
+    { id: 'config', label: 'Configuración', icon: Settings, soloAdmin: true },
   ];
+
+  const itemsVisibles = menuItems.filter((item) => !esTecnico || !item.soloAdmin);
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col min-h-screen">
@@ -26,13 +28,15 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         </div>
         <div>
           <h1 className="font-bold text-white leading-tight">Servicio Técnico</h1>
-          <p className="text-xs text-slate-400">Panel de Gestión</p>
+          <p className="text-xs text-slate-400">
+            {esTecnico ? 'Modo Técnico' : 'Panel de Gestión'}
+          </p>
         </div>
       </div>
 
       {/* Opciones de navegación */}
       <nav className="flex-1 p-3 space-y-1.5">
-        {menuItems.map((item) => {
+        {itemsVisibles.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
