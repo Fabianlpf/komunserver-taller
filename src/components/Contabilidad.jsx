@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { exportarContabilidadExcel, imprimirCierreCaja } from '../utils/reportesContabilidad';
 import {
+  FileSpreadsheet,
+  Printer,
   TrendingUp,
   TrendingDown,
   Wallet,
@@ -26,7 +29,7 @@ const FORM_VACIO = {
   forma_pago: 'Efectivo',
 };
 
-export default function Contabilidad() {
+export default function Contabilidad({ configTaller }) {
   const [movimientos, setMovimientos] = useState([]);
   const [ordenes, setOrdenes] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -93,16 +96,27 @@ export default function Contabilidad() {
   // Convertimos los abonos de órdenes en movimientos de ingreso automáticos
   const ingresosOrdenes = ordenes
     .filter((o) => Number(o.abono) > 0 && cumplePeriodo(o.fecha))
-    .map((o) => ({
-      id: `orden-${o.numero}`,
-      esOrden: true,
-      fecha: o.fecha,
-      tipo: 'Ingreso',
-      categoria: 'Servicio Técnico',
-      concepto: `Abono Orden #${o.numero} — ${o.cliente}`,
-      monto: Number(o.abono),
-      forma_pago: o.formaPago || 'Efectivo',
-    }));
+    .map((o) => {
+      const pres = Number(o.presupuesto) || 0;
+      const rec = (pres * (Number(o.recargoPorcentaje) || 0)) / 100;
+      const total = pres + rec;
+      const abono = Number(o.abono) || 0;
+      const saldo = Math.max(0, total - abono);
+      const estaPagado = total > 0 && saldo === 0;
+
+      return {
+        id: `orden-${o.numero}`,
+        esOrden: true,
+        fecha: o.fecha,
+        tipo: 'Ingreso',
+        categoria: estaPagado ? 'Servicio Técnico • Pagado' : 'Servicio Técnico • Abono',
+        concepto: estaPagado
+          ? `Pago Total Orden #${o.numero} — ${o.cliente}`
+          : `Abono Orden #${o.numero} — ${o.cliente} (Saldo: $${saldo.toLocaleString('es-CO')})`,
+        monto: abono,
+        forma_pago: o.formaPago || 'Efectivo',
+      };
+    });
 
   const movsFiltrados = movimientos
     .filter((m) => cumplePeriodo(m.fecha))
@@ -167,6 +181,34 @@ export default function Contabilidad() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() =>
+              exportarContabilidadExcel(historialUnificado, {
+                ingresos: totalIngresos,
+                egresos: totalEgresos,
+                balance: balanceCaja,
+              })
+            }
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-sm font-medium transition cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4" /> Excel
+          </button>
+          <button
+            onClick={() =>
+              imprimirCierreCaja(
+                historialUnificado,
+                {
+                  ingresos: totalIngresos,
+                  egresos: totalEgresos,
+                  balance: balanceCaja,
+                },
+                configTaller
+              )
+            }
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-sm font-medium transition cursor-pointer"
+          >
+            <Printer className="w-4 h-4" /> Imprimir Cierre
+          </button>
           <button
             onClick={() => {
               setForm({ ...FORM_VACIO, tipo: 'Ingreso', categoria: 'Venta Directa' });

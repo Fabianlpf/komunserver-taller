@@ -670,9 +670,17 @@ export default function App() {
 
               {/* Cobros y Resumen Financiero */}
               <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-                  Cobros y Resumen Financiero
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                    Cobros y Resumen Financiero
+                  </h3>
+                  {totalServicio > 0 && saldoPendiente === 0 && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                      PAGADO TOTAL
+                    </span>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Fecha estimada de entrega</label>
@@ -738,6 +746,16 @@ export default function App() {
                     </div>
                   </div>
 
+                  {totalServicio > 0 && saldoPendiente > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setOrden((prev) => ({ ...prev, abono: totalServicio }))}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Marcar como Pagado Total ($ {totalServicio.toLocaleString('es-CO')})
+                    </button>
+                  )}
+
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2 text-sm">
                     <div className="flex justify-between text-slate-400">
                       <span>Recargo ({recargoPct}%):</span>
@@ -747,9 +765,19 @@ export default function App() {
                       <span>Total del Servicio:</span>
                       <span className="text-cyan-400">$ {totalServicio.toLocaleString('es-CO')}</span>
                     </div>
-                    <div className="flex justify-between text-amber-400 font-semibold">
-                      <span>Saldo Pendiente:</span>
-                      <span>$ {saldoPendiente.toLocaleString('es-CO')}</span>
+                    <div
+                      className={`flex justify-between font-semibold ${
+                        saldoPendiente === 0 && totalServicio > 0
+                          ? 'text-emerald-400'
+                          : 'text-amber-400'
+                      }`}
+                    >
+                      <span>{saldoPendiente === 0 && totalServicio > 0 ? 'Estado:' : 'Saldo Pendiente:'}</span>
+                      <span>
+                        {saldoPendiente === 0 && totalServicio > 0
+                          ? 'PAGADO ($ 0)'
+                          : `$ ${saldoPendiente.toLocaleString('es-CO')}`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -761,7 +789,7 @@ export default function App() {
         ) : activeTab === 'stock' ? (
           <StockManager />
         ) : activeTab === 'contabilidad' ? (
-          <Contabilidad />
+          <Contabilidad configTaller={configTaller} />
           
         ) : activeTab === 'config' || activeTab === 'configuracion' ? (
           <ConfiguracionTaller onConfigActualizada={setConfigTaller} />
