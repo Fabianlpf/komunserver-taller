@@ -1,12 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, Mail, LogIn, ShieldCheck } from 'lucide-react';
 import { supabase } from '../services/supabase';
+import { obtenerConfiguracion } from '../services/configService';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+  const [taller, setTaller] = useState({ nombre: 'SISTEMA DE TALLER', logo_url: '' });
+
+  useEffect(() => {
+    obtenerConfiguracion()
+      .then((data) => {
+        if (data) setTaller(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -33,10 +43,20 @@ export default function Login() {
     <div className="min-h-screen bg-[#0b1120] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">KOMUNSERVER</h1>
+          {taller.logo_url ? (
+            <img
+              src={taller.logo_url}
+              alt={taller.nombre}
+              className="h-16 w-auto mx-auto object-contain mb-2"
+            />
+          ) : (
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+          )}
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {taller.nombre || 'SISTEMA DE TALLER'}
+          </h1>
           <p className="text-xs text-slate-400">Acceso al Sistema de Gestión de Taller</p>
         </div>
 
